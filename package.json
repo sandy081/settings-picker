@@ -2,7 +2,7 @@
 	"name": "settings-picker",
 	"displayName": "settings-picker",
 	"description": "Settings Picker",
-	"version": "0.0.1",
+	"version": "1.0.0",
 	"publisher": "sandy081",
 	"engines": {
 		"vscode": "^1.18.0"
