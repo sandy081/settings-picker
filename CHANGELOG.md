@@ -3,5 +3,5 @@ All notable changes to the "settings-picker" extension will be documented in thi
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## [Unreleased]
-- Initial release
+## [1.0.0]
+- `Toggle Setting` command to toggle a setting
