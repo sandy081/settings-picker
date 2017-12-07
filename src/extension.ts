@@ -92,22 +92,17 @@ export class Configuration {
 	async reset() {
 		const item = await vscode.window.showQuickPick(this.getSettings(), { matchOnDescription: true, placeHolder: "Select the setting to update" });
 		if (item) {
-			const configuration = vscode.workspace.getConfiguration();
+			const configuration = vscode.workspace.getConfiguration(null, null);
 			const setting = item.label;
 			const inspect = configuration.inspect(setting);
 			if (inspect) {
-				if (inspect.workspaceValue !== undefined) {
-					await this.updateSetting(configuration, setting, void 0, ConfigurationTarget.Workspace);
-				}
-				if (inspect.globalValue !== undefined) {
-					await this.updateSetting(configuration, setting, void 0, ConfigurationTarget.Global);
-				}
+				await this.updateSetting(configuration, setting, inspect.defaultValue);
 			}
 		}
 	}
 
 	private async updateEnumTypeSetting(setting: string, schema: IJSONSchema) {
-		const configuration = vscode.workspace.getConfiguration();
+		const configuration = vscode.workspace.getConfiguration(null, null);
 		const currentValue = configuration.get(setting);
 		const inspect = configuration.inspect(setting);
 		if (schema.enum && schema.enum.length) {
@@ -122,7 +117,7 @@ export class Configuration {
 	}
 
 	private async updateBooleanTypeSetting(setting: string, schema: IJSONSchema) {
-		const configuration = vscode.workspace.getConfiguration();
+		const configuration = vscode.workspace.getConfiguration(null, null);
 		const currentValue = configuration.get(setting);
 		const inspect = configuration.inspect(setting);
 		const item = await vscode.window.showQuickPick([
@@ -145,7 +140,7 @@ export class Configuration {
 	}
 
 	private async updateStringTypeSetting(setting: string, schema: IJSONSchema) {
-		const configuration = vscode.workspace.getConfiguration();
+		const configuration = vscode.workspace.getConfiguration(null, null);
 		const currentValue = configuration.get(setting);
 		const inspect = configuration.inspect(setting);
 		const value = await vscode.window.showInputBox({
@@ -158,7 +153,7 @@ export class Configuration {
 	}
 
 	private async updateNumberTypeSetting(setting: string, schema: IJSONSchema) {
-		const configuration = vscode.workspace.getConfiguration();
+		const configuration = vscode.workspace.getConfiguration(null, null);
 		const currentValue = configuration.get(setting);
 		const inspect = configuration.inspect(setting);
 		const inputValue = await vscode.window.showInputBox({
@@ -183,7 +178,7 @@ export class Configuration {
 
 	private getBooleanSettings(): vscode.QuickPickItem[] {
 		const booleanSettings: vscode.QuickPickItem[] = [];
-		const configuration = vscode.workspace.getConfiguration();
+		const configuration = vscode.workspace.getConfiguration(null, null);
 
 		for (const setting of this.recentlyUpdated) {
 			const schema = this.settings.get(setting);
@@ -233,7 +228,7 @@ export class Configuration {
 	}
 
 	private async toggleSetting(setting: string) {
-		const configuration = vscode.workspace.getConfiguration();
+		const configuration = vscode.workspace.getConfiguration(null, null);
 		const value = configuration.get(setting)
 		await this.updateSetting(configuration, setting, !value);
 	}
@@ -241,14 +236,23 @@ export class Configuration {
 	private async updateSetting(configuration: vscode.WorkspaceConfiguration, setting: string, value: any, target?: vscode.ConfigurationTarget) {
 		const inspect = configuration.inspect(setting);
 		if (inspect) {
-			target = target !== void 0 ? target : inspect.workspaceValue !== void 0 ? vscode.ConfigurationTarget.Workspace : vscode.ConfigurationTarget.Global;
-			await configuration.update(setting, value, target);
-			const index = this.recentlyUpdated.indexOf(setting);
-			if (index !== -1) {
-				this.recentlyUpdated.splice(index, 1);
+			if (inspect.defaultValue === value) {
+				if (inspect.workspaceValue !== undefined) {
+					await this.updateSetting(configuration, setting, void 0, ConfigurationTarget.Workspace);
+				}
+				if (inspect.globalValue !== undefined) {
+					await this.updateSetting(configuration, setting, void 0, ConfigurationTarget.Global);
+				}
+			} else {
+				target = target !== void 0 ? target : inspect.workspaceValue !== void 0 ? vscode.ConfigurationTarget.Workspace : vscode.ConfigurationTarget.Global;
+				await configuration.update(setting, value, target);
+				const index = this.recentlyUpdated.indexOf(setting);
+				if (index !== -1) {
+					this.recentlyUpdated.splice(index, 1);
+				}
+				this.recentlyUpdated.splice(0, 0, setting);
+				this.context.globalState.update('settings.picker.recentlyUpdated', JSON.stringify(this.recentlyUpdated));
 			}
-			this.recentlyUpdated.splice(0, 0, setting);
-			this.context.globalState.update('settings.picker.recentlyUpdated', JSON.stringify(this.recentlyUpdated));
 		}
 	}
 
