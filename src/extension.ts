@@ -92,13 +92,10 @@ export class Configuration {
 	async reset() {
 		const item = await vscode.window.showQuickPick(this.getSettings(), { matchOnDescription: true, placeHolder: "Select the setting to update" });
 		if (item) {
-			const configuration = vscode.workspace.getConfiguration();
+			const configuration = vscode.workspace.getConfiguration(null);
 			const setting = item.label;
 			const inspect = configuration.inspect(setting);
 			if (inspect) {
-				if (inspect.workspaceValue !== undefined) {
-					await this.updateSetting(configuration, setting, void 0, ConfigurationTarget.Workspace);
-				}
 				if (inspect.globalValue !== undefined) {
 					await this.updateSetting(configuration, setting, void 0, ConfigurationTarget.Global);
 				}
